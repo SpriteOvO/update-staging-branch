@@ -33,21 +33,14 @@ runs:
     - name: 'Checkout ${{ inputs.main-branch }}'
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.main-branch }}
         fetch-depth: 0
     - name: 'Rebase ${{ inputs.staging-branch }} onto ${{ inputs.main-branch }}'
+      if: github.event_name != 'pull_request'
       shell: bash
-      run: |
-        # Leave the staging branch unchanged if this is a PR.  This is not a
-        # GitHub Actions-level "if" because we want this job to return success
-        # (so that subsequent jobs run).
-        if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-          exit 0
-        fi
-
+      run:
         # Rebase the staging branch on the default branch.  Create the staging
         # branch if it doesn't exist.
-        git checkout -b ${{ inputs.staging-branch }}
+        git checkout -b ${{ inputs.staging-branch }} ${{ inputs.main-branch }}
         if [[ ! `git fetch origin ${{ inputs.staging-branch }}` ]]; then
           git reset --hard origin/${{ inputs.staging-branch }}
           git config user.name ${{ inputs.user }}
@@ -56,12 +49,3 @@ runs:
         fi
 
         git push --force origin ${{ inputs.staging-branch }}
-
-    - name: 'Switch to work branch'
-      shell: bash
-      run: |
-        if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-          git checkout ${{ github.event.pull_request.head.sha }}
-        else
-          git checkout ${{ inputs.staging-branch }}
-        fi
