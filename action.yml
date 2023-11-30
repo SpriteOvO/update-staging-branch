@@ -61,7 +61,7 @@ runs:
       shell: bash
       run: |
         if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-          git checkout ${{ github.ref }}
+          git checkout ${{ github.sha }}
         else
           git checkout ${{ inputs.staging-branch }}
         fi
